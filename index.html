@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cardápio da UniBakery</title>
+  <title>Cardápio UniBakery</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,89 +13,98 @@
     h1 {
       text-align: center;
     }
-    .menu-list {
-      list-style: none;
+    #menu-list {
+      max-width: 500px;
+      margin: 0 auto 20px auto;
       padding: 0;
-      max-width: 600px;
-      margin: 0 auto;
+      list-style: none;
     }
-    .menu-item {
+    #menu-list li {
       background: white;
-      margin-bottom: 10px;
-      padding: 15px;
+      padding: 12px;
+      margin-bottom: 8px;
       border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: 0.2s;
     }
-    .menu-item h3 {
-      margin: 0 0 5px 0;
-      font-size: 1.2em;
+    #menu-list li:hover {
+      background: #f0f0f0;
     }
-    .menu-item p {
-      margin: 0 0 8px 0;
-      color: #555;
+    #details {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
     }
     .price {
       font-weight: bold;
-      color: #333;
-    }
-    .id {
-      font-size: 0.9em;
-      color: #777;
-    }
-    .error {
-      color: red;
-      text-align: center;
     }
   </style>
 </head>
 <body>
+
   <h1>Cardápio UniBakery</h1>
 
-  <ul id="menu" class="menu-list"></ul>
-  <p id="error" class="error" style="display:none;"></p>
+  <ul id="menu-list"></ul>
+
+  <div id="details" style="display:none;"></div>
 
   <script>
-    async function fetchMenu() {
-      const url = 'https://unibakery.onrender.com/menu';
+    const API = "https://unibakery.onrender.com";
 
+    // Carrega lista de nomes
+    async function loadMenuNames() {
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Erro ao buscar cardápio: " + response.status);
+        const res = await fetch(`${API}/menu`);
+        const names = await res.json();
 
-        const data = await response.json();
-        renderMenu(data);
+        if (!Array.isArray(names)) {
+          throw new Error("A API /menu não retornou uma lista.");
+        }
+
+        const ul = document.getElementById("menu-list");
+        ul.innerHTML = "";
+
+        names.forEach((name, index) => {
+          const li = document.createElement("li");
+          li.textContent = name;
+          li.onclick = () => loadItemDetails(index + 1); // ID presumido como posição da lista
+          ul.appendChild(li);
+        });
 
       } catch (err) {
-        document.getElementById('error').textContent = err.message;
-        document.getElementById('error').style.display = 'block';
+        alert("Erro ao carregar o cardápio: " + err.message);
       }
     }
 
-    function renderMenu(items) {
-      const ul = document.getElementById('menu');
-      ul.innerHTML = '';
+    // Carrega os detalhes de um item usando /menu/id
+    async function loadItemDetails(id) {
+      try {
+        const res = await fetch(`${API}/menu/${id}`);
+        if (!res.ok) throw new Error("Item não encontrado (id: " + id + ")");
 
-      if (!Array.isArray(items) || items.length === 0) {
-        ul.innerHTML = '<li>Nenhum item encontrado.</li>';
-        return;
-      }
+        const item = await res.json();
 
-      items.forEach(item => {
-        const li = document.createElement('li');
-        li.className = 'menu-item';
+        const div = document.getElementById("details");
+        div.style.display = "block";
 
-        li.innerHTML = `
-          <p class="id">ID: ${item.id}</p>
-          <h3>${item.nome}</h3>
+        div.innerHTML = `
+          <h2>${item.nome}</h2>
+          <p><strong>ID:</strong> ${item.id}</p>
           <p>${item.descricao}</p>
-          <p class="price">R$ ${Number(item.valor).toFixed(2)}</p>
+          <p class="price">Preço: R$ ${Number(item.valor).toFixed(2)}</p>
         `;
-
-        ul.appendChild(li);
-      });
+      } catch (err) {
+        alert("Erro ao buscar detalhes: " + err.message);
+      }
     }
 
-    fetchMenu();
+    // Carrega nomes ao abrir a página
+    loadMenuNames();
   </script>
+
 </body>
 </html>
