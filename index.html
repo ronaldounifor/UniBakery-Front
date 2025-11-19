@@ -55,15 +55,14 @@
   <script>
     const API = "https://unibakery.onrender.com";
 
-    // Carrega lista de nomes
+    // Carrega lista de nomes (string -> array)
     async function loadMenuNames() {
       try {
         const res = await fetch(`${API}/menu`);
-        const names = await res.json();
+        const text = await res.text();   // <-- IMPORTANTE: agora é .text()
 
-        if (!Array.isArray(names)) {
-          throw new Error("A API /menu não retornou uma lista.");
-        }
+        // Divide a string em nomes usando vírgula como separador
+        const names = text.split(",").map(n => n.trim()).filter(n => n.length > 0);
 
         const ul = document.getElementById("menu-list");
         ul.innerHTML = "";
@@ -71,7 +70,10 @@
         names.forEach((name, index) => {
           const li = document.createElement("li");
           li.textContent = name;
-          li.onclick = () => loadItemDetails(index + 1); // ID presumido como posição da lista
+
+          // Assumindo que o ID ainda é (posição + 1)
+          li.onclick = () => loadItemDetails(index + 1);
+
           ul.appendChild(li);
         });
 
@@ -80,7 +82,7 @@
       }
     }
 
-    // Carrega os detalhes de um item usando /menu/id
+    // Carrega detalhes do item /menu/{id}
     async function loadItemDetails(id) {
       try {
         const res = await fetch(`${API}/menu/${id}`);
@@ -102,7 +104,6 @@
       }
     }
 
-    // Carrega nomes ao abrir a página
     loadMenuNames();
   </script>
 
